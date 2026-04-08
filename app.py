@@ -83,6 +83,10 @@ def login_required(f):
 #  עמודי כניסה
 # ─────────────────────────────────────────────
 
+@app.route("/health")
+def health():
+    return "OK", 200
+
 @app.route("/", methods=["GET"])
 def index():
     if session.get("logged_in"):
@@ -645,12 +649,6 @@ def load_treatments_list_text() -> str:
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("\n" + "=" * 50)
-    print("  רויאל-מד | ROYAL-MED AI")
-    print("  מערכת AI פנימית למרפאה")
-    print("=" * 50)
-    print(f"  כתובת: http://localhost:5000")
-    print(f"  סיסמה: {SYSTEM_PASSWORD}")
-    print("=" * 50 + "\n")
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    print(f"Starting on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=True)
