@@ -44,7 +44,11 @@ from agents.visualization_agent import run_visualization_agent
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "royal-med-secret-2024-change-this")
 
-# אתחול מסד נתונים — רץ תמיד (גם עם gunicorn)
+# יצירת תיקיות הכרחיות
+Path("data").mkdir(exist_ok=True)
+Path("static/uploads").mkdir(parents=True, exist_ok=True)
+
+# אתחול מסד נתונים
 init_database()
 
 UPLOAD_FOLDER = Path(__file__).parent / "static" / "uploads"
