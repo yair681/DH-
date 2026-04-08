@@ -44,6 +44,9 @@ from agents.visualization_agent import run_visualization_agent
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "royal-med-secret-2024-change-this")
 
+# אתחול מסד נתונים — רץ תמיד (גם עם gunicorn)
+init_database()
+
 UPLOAD_FOLDER = Path(__file__).parent / "static" / "uploads"
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = str(UPLOAD_FOLDER)
@@ -638,7 +641,6 @@ def load_treatments_list_text() -> str:
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
-    init_database()
     print("\n" + "=" * 50)
     print("  רויאל-מד | ROYAL-MED AI")
     print("  מערכת AI פנימית למרפאה")
