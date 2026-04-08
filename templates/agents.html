@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Agents | רויאל-מד{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">🤖 ה-Agents שלי</h1>
+    <p class="page-subtitle">צור ונהל עוזרי AI מותאמים אישית למרפאה</p>
+  </div>
+  <a href="{{ url_for('agent_new') }}" class="btn btn-primary btn-large">+ צור Agent חדש</a>
+</div>
+
+{% if agents %}
+<div class="agents-grid">
+  {% for agent in agents %}
+  <div class="agent-card {% if not agent.active %}agent-inactive{% endif %}">
+    <div class="agent-card-header">
+      <div class="agent-icon-big">{{ agent.icon }}</div>
+      <div class="agent-status-dot {% if agent.active %}dot-active{% else %}dot-inactive{% endif %}"></div>
+    </div>
+    <div class="agent-name">{{ agent.name }}</div>
+    <div class="agent-desc">{{ agent.description or 'אין תיאור' }}</div>
+    <div class="agent-model-tag">{{ agent.model }}</div>
+    <div class="agent-knowledge-preview">
+      {% if agent.knowledge %}
+      <span class="knowledge-badge">📚 יש בסיס ידע</span>
+      {% endif %}
+    </div>
+    <div class="agent-card-actions">
+      <a href="{{ url_for('agent_chat', agent_id=agent.id) }}" class="btn btn-primary btn-sm">
+        💬 שוחח
+      </a>
+      <a href="{{ url_for('agent_edit', agent_id=agent.id) }}" class="btn btn-outline btn-sm">
+        ✏️ ערוך
+      </a>
+      <button onclick="deleteAgent({{ agent.id }}, '{{ agent.name }}')" class="btn btn-danger btn-sm">
+        🗑
+      </button>
+    </div>
+    <div class="agent-created">נוצר: {{ agent.created_at[:10] }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">🤖</div>
+  <div class="empty-title">אין Agents עדיין</div>
+  <div class="empty-desc">צור את ה-Agent הראשון שלך — תן לו שם, לַמֵּד אותו ושחרר אותו לעבוד</div>
+  <a href="{{ url_for('agent_new') }}" class="btn btn-primary" style="margin-top:20px">+ צור Agent ראשון</a>
+</div>
+{% endif %}
+
+<!-- טיפים -->
+<div class="tips-section">
+  <div class="section-title">💡 רעיונות ל-Agents</div>
+  <div class="tips-grid">
+    <div class="tip-card" onclick="useTemplate('יועץ טיפולי','💆','מומחה לייעוץ טיפולי אסתטי','אתה יועץ טיפולי מומחה של רויאל-מד. תפקידך לסייע לצוות לבנות תוכניות טיפול מותאמות אישית למטופלים. שאל שאלות ממוקדות, בצע אבחון ראשוני והמלץ על שילוב טיפולים אופטימלי.')">
+      <div class="tip-icon">💆</div>
+      <div class="tip-name">יועץ טיפולי</div>
+      <div class="tip-desc">מתאים תוכנית טיפול אישית לכל מטופל</div>
+    </div>
+    <div class="tip-card" onclick="useTemplate('מומחה אנטי-אייג\'ינג','🧬','מומחה לטיפולי נגד הזדקנות','אתה מומחה ברפואה אנטי-אייג׳ינג. מתמחה בניתוח גורמי הזדקנות, המלצה על פרוטוקולי חידוש ומתן מידע מדעי על טיפולים שומרי נעורים.')">
+      <div class="tip-icon">🧬</div>
+      <div class="tip-name">מומחה אנטי-אייג'ינג</div>
+      <div class="tip-desc">פרוטוקולי חידוש ומניעת הזדקנות</div>
+    </div>
+    <div class="tip-card" onclick="useTemplate('מומחה עור','🔬','דרמטולוגיה אסתטית','אתה מומחה בדרמטולוגיה אסתטית. מתמחה בניתוח בעיות עור, זיהוי מצבים כמו אקנה, רוזציאה, היפרפיגמנטציה והמלצה על פרוטוקולי טיפול מתאימים.')">
+      <div class="tip-icon">🔬</div>
+      <div class="tip-name">מומחה עור</div>
+      <div class="tip-desc">אבחון ופרוטוקולי טיפולי עור</div>
+    </div>
+    <div class="tip-card" onclick="useTemplate('מתאם מטופלים','📋','ניהול ותיאום מטופלים','אתה מתאם מטופלים של רויאל-מד. עוזר לצוות לנהל מעקב אחר מטופלים, לתכנן סדרות טיפול, לתזכר פגישות המשך ולרשום הערות קליניות.')">
+      <div class="tip-icon">📋</div>
+      <div class="tip-name">מתאם מטופלים</div>
+      <div class="tip-desc">מעקב, תיאום וניהול מטופלים</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteAgent(id, name) {
+  if (!confirm(`למחוק את "${name}"?`)) return;
+  fetch(`/api/agents/${id}/delete`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => { if (d.success) location.reload(); });
+}
+
+function useTemplate(name, icon, desc, prompt) {
+  window.location.href = `/agents/new?name=${encodeURIComponent(name)}&icon=${encodeURIComponent(icon)}&desc=${encodeURIComponent(desc)}&prompt=${encodeURIComponent(prompt)}`;
+}
+</script>
+{% endblock %}

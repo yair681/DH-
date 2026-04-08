@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}הגדרות | רויאל-מד{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">⚙ הגדרות המערכת</h1>
+  <p class="page-subtitle">ניהול API, סיסמה ורשימת טיפולים</p>
+</div>
+
+<div class="settings-layout">
+
+  <!-- API Keys -->
+  <div class="card">
+    <div class="card-title">🔑 הגדרות API</div>
+    <form id="apiForm">
+      <div class="form-group">
+        <label class="form-label">
+          OpenAI API Key
+          <span class="key-status {% if openai_set %}key-ok{% else %}key-missing{% endif %}">
+            {% if openai_set %}✓ מוגדר{% else %}⚠ לא מוגדר{% endif %}
+          </span>
+        </label>
+        <input type="password" name="openai_key" class="form-input"
+          placeholder="sk-proj-..."
+          autocomplete="off">
+        <div class="field-hint">מקבל מ-platform.openai.com | לניתוח תמונות + הדמיות</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          Google Gemini API Key
+          <span class="key-status {% if gemini_set %}key-ok{% else %}key-missing{% endif %}">
+            {% if gemini_set %}✓ מוגדר{% else %}⚠ לא מוגדר{% endif %}
+          </span>
+        </label>
+        <input type="password" name="gemini_key" class="form-input"
+          placeholder="AIza..."
+          autocomplete="off">
+        <div class="field-hint">מקבל מ-aistudio.google.com | מודל חלופי</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">שינוי סיסמת כניסה</label>
+        <input type="password" name="new_password" class="form-input"
+          placeholder="השאר ריק לא לשנות"
+          autocomplete="new-password">
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="saveApiBtn">שמור הגדרות</button>
+      <div id="apiSaveMsg" style="display:none" class="success-msg">✓ ההגדרות נשמרו!</div>
+    </form>
+  </div>
+
+  <!-- רשימת טיפולים -->
+  <div class="card">
+    <div class="card-title">💉 ניהול רשימת טיפולים</div>
+    <p class="card-desc">ניתן להוסיף, לערוך ולהסתיר טיפולים. שינויים ישפיעו מיד על ה-AI.</p>
+
+    <div id="treatmentsEditor">
+      <div class="loading-treatments">טוען רשימת טיפולים...</div>
+    </div>
+
+    <div class="treatments-actions">
+      <button onclick="addNewTreatment()" class="btn btn-secondary">+ הוסף טיפול</button>
+      <button onclick="saveTreatments()" class="btn btn-primary">💾 שמור שינויים</button>
+      <div id="treatSaveMsg" style="display:none" class="success-msg">✓ נשמר!</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- מודל הוספת טיפול -->
+<div class="modal-overlay" id="addTreatmentModal" style="display:none" onclick="closeModal(event)">
+  <div class="modal-card">
+    <div class="modal-title">הוסף טיפול חדש</div>
+    <div class="form-group">
+      <label class="form-label">קטגוריה</label>
+      <select id="newTreatCat" class="form-input form-select"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">מזהה ייחודי (אנגלית, ללא רווחים) *</label>
+      <input type="text" id="newTreatId" class="form-input" placeholder="e.g. new_treatment">
+    </div>
+    <div class="form-group">
+      <label class="form-label">שם הטיפול *</label>
+      <input type="text" id="newTreatName" class="form-input" placeholder="שם הטיפול בעברית">
+    </div>
+    <div class="form-group">
+      <label class="form-label">תיאור</label>
+      <textarea id="newTreatDesc" class="form-input form-textarea" placeholder="תיאור הטיפול..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">התוויות (מופרדות בפסיק)</label>
+      <input type="text" id="newTreatIndications" class="form-input" placeholder="קמטים, נפח, עור...">
+    </div>
+    <div class="modal-actions">
+      <button onclick="document.getElementById('addTreatmentModal').style.display='none'" class="btn btn-outline">ביטול</button>
+      <button onclick="confirmAddTreatment()" class="btn btn-primary">הוסף</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let treatmentsData = null;
+
+// שמירת API Keys
+document.getElementById('apiForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  try {
+    const res = await fetch('/api/save-api-keys', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.success) {
+      const msg = document.getElementById('apiSaveMsg');
+      msg.style.display = 'block';
+      setTimeout(() => msg.style.display = 'none', 3000);
+    }
+  } catch (err) {
+    alert('שגיאה בשמירה');
+  }
+});
+
+// טעינת טיפולים
+async function loadTreatments() {
+  const res = await fetch('/api/treatments');
+  treatmentsData = await res.json();
+  renderTreatments();
+}
+
+function renderTreatments() {
+  const container = document.getElementById('treatmentsEditor');
+  let html = '';
+
+  treatmentsData.categories.forEach((cat, catIdx) => {
+    html += `
+      <div class="treat-category">
+        <div class="treat-cat-header">
+          <span class="treat-cat-name">${cat.name}</span>
+        </div>
+        <div class="treat-list">
+    `;
+    cat.treatments.forEach((t, treatIdx) => {
+      html += `
+        <div class="treat-item ${t.active ? '' : 'treat-inactive'}" data-cat="${catIdx}" data-treat="${treatIdx}">
+          <div class="treat-item-header">
+            <div class="treat-item-name">${t.name}</div>
+            <div class="treat-item-actions">
+              <label class="toggle-label">
+                <input type="checkbox" class="treat-toggle" onchange="toggleTreatment(${catIdx},${treatIdx},this.checked)"
+                  ${t.active ? 'checked' : ''}>
+                <span class="toggle-text">${t.active ? 'פעיל' : 'כבוי'}</span>
+              </label>
+              <button onclick="editTreatment(${catIdx},${treatIdx})" class="btn btn-outline btn-xs">ערוך</button>
+            </div>
+          </div>
+          <div class="treat-item-desc">${t.description}</div>
+        </div>
+      `;
+    });
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleTreatment(catIdx, treatIdx, active) {
+  treatmentsData.categories[catIdx].treatments[treatIdx].active = active;
+  renderTreatments();
+}
+
+function editTreatment(catIdx, treatIdx) {
+  const t = treatmentsData.categories[catIdx].treatments[treatIdx];
+  const name = prompt('שם הטיפול:', t.name);
+  if (name) treatmentsData.categories[catIdx].treatments[treatIdx].name = name;
+  const desc = prompt('תיאור:', t.description);
+  if (desc) treatmentsData.categories[catIdx].treatments[treatIdx].description = desc;
+  renderTreatments();
+}
+
+async function saveTreatments() {
+  const res = await fetch('/api/treatments/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(treatmentsData)
+  });
+  const data = await res.json();
+  if (data.success) {
+    const msg = document.getElementById('treatSaveMsg');
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  }
+}
+
+function addNewTreatment() {
+  const catSelect = document.getElementById('newTreatCat');
+  catSelect.innerHTML = treatmentsData.categories.map((c, i) =>
+    `<option value="${i}">${c.name}</option>`
+  ).join('');
+  document.getElementById('addTreatmentModal').style.display = 'flex';
+}
+
+function confirmAddTreatment() {
+  const catIdx = parseInt(document.getElementById('newTreatCat').value);
+  const id = document.getElementById('newTreatId').value.trim();
+  const name = document.getElementById('newTreatName').value.trim();
+  const desc = document.getElementById('newTreatDesc').value.trim();
+  const indications = document.getElementById('newTreatIndications').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  if (!id || !name) { alert('מזהה ושם הם שדות חובה'); return; }
+
+  treatmentsData.categories[catIdx].treatments.push({
+    id, name, description: desc,
+    indications, duration: '', recovery: '', active: true
+  });
+
+  renderTreatments();
+  document.getElementById('addTreatmentModal').style.display = 'none';
+  document.getElementById('newTreatId').value = '';
+  document.getElementById('newTreatName').value = '';
+  document.getElementById('newTreatDesc').value = '';
+  document.getElementById('newTreatIndications').value = '';
+}
+
+function closeModal(e) {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.style.display = 'none';
+  }
+}
+
+loadTreatments();
+</script>
+{% endblock %}

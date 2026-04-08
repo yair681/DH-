@@ -1,0 +1,157 @@
+{
+  "version": "1.0",
+  "clinic_name": "רויאל-מד",
+  "last_updated": "2026-04-07",
+  "categories": [
+    {
+      "id": "face_rejuvenation",
+      "name": "חידוש פנים",
+      "treatments": [
+        {
+          "id": "botox",
+          "name": "בוטוקס",
+          "description": "הזרקת בוטולינום טוקסין להרפיית שרירים ומיצוק עור",
+          "indications": ["קמטים דינמיים", "קמטי מצח", "עורבות", "קמטי פפה"],
+          "duration": "15-30 דקות",
+          "recovery": "ללא זמן החלמה",
+          "active": true
+        },
+        {
+          "id": "hyaluronic_fillers",
+          "name": "פילר חומצה היאלורונית",
+          "description": "הזרקת פילר להשלמת נפח, חידוש מבנה הפנים ומילוי קמטים",
+          "indications": ["קמטים עמוקים", "דלדול נפח בלחיים", "שפתיים", "נאזו-לביאל", "מתחת לעיניים"],
+          "duration": "30-60 דקות",
+          "recovery": "1-3 ימים",
+          "active": true
+        },
+        {
+          "id": "prp",
+          "name": "PRP - פלזמה עשירה בטסיות",
+          "description": "טיפול ב-PRP לחידוש עור, שיפור מרקם ועור זוהר",
+          "indications": ["הזדקנות עור", "צלקות אקנה", "עור עמום", "נשירת שיער"],
+          "duration": "45-60 דקות",
+          "recovery": "24-48 שעות",
+          "active": true
+        },
+        {
+          "id": "microneedling",
+          "name": "מיקרונידלינג (Dermapen)",
+          "description": "יצירת מיקרו-פציעות לעידוד ייצור קולגן ואלסטין",
+          "indications": ["צלקות אקנה", "מרקם עור לא אחיד", "נקבוביות מוגדלות", "קמטים דקים"],
+          "duration": "45-60 דקות",
+          "recovery": "2-3 ימים",
+          "active": true
+        },
+        {
+          "id": "chemical_peel",
+          "name": "פילינג כימי",
+          "description": "טיפול פילינג עמוק לחידוש תאי עור ושיפור מרקם",
+          "indications": ["כתמי שמש", "אקנה", "היפרפיגמנטציה", "עור עמום"],
+          "duration": "30-45 דקות",
+          "recovery": "3-7 ימים",
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": "skin_treatments",
+      "name": "טיפולי עור",
+      "treatments": [
+        {
+          "id": "laser_resurfacing",
+          "name": "לייזר פיצול חלקי (Fractional)",
+          "description": "טיפול לייזר מתקדם לחידוש עמוק ומיצוק עור",
+          "indications": ["קמטים עמוקים", "צלקות", "הרחבת נקבוביות", "הזדקנות עור"],
+          "duration": "60-90 דקות",
+          "recovery": "5-7 ימים",
+          "active": true
+        },
+        {
+          "id": "ipl",
+          "name": "IPL - אור פולסי אינטנסיבי",
+          "description": "טיפול אור להסרת כתמים, כלי דם ושיפור גוון עור",
+          "indications": ["כתמי גיל", "אדמומיות", "רוזציאה", "כלי דם"],
+          "duration": "30-45 דקות",
+          "recovery": "1-2 ימים",
+          "active": true
+        },
+        {
+          "id": "co2_laser",
+          "name": "לייזר CO2",
+          "description": "לייזר CO2 לטיפול בצלקות, קמטים עמוקים והסרת גידולים",
+          "indications": ["צלקות קשות", "קמטים עמוקים", "פגמי עור"],
+          "duration": "45-60 דקות",
+          "recovery": "7-14 ימים",
+          "active": true
+        },
+        {
+          "id": "hifu",
+          "name": "HIFU - מיצוק עור אולטרסאונד",
+          "description": "טיפול ללא ניתוח למיצוק עור, הרמת פנים ומיצוק צוואר",
+          "indications": ["רפיון עור", "ירידת קו לסת", "עור צוואר רופף", "עפעפיים כבדות"],
+          "duration": "60-90 דקות",
+          "recovery": "ללא זמן החלמה",
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": "body_treatments",
+      "name": "טיפולי גוף",
+      "treatments": [
+        {
+          "id": "coolsculpting",
+          "name": "קריוליפוליזה (CoolSculpting)",
+          "description": "הקפאה ופירוק תאי שומן ללא ניתוח",
+          "indications": ["שומן מקומי בטן", "שומן ירכיים", "גב תחתון", "ידיים"],
+          "duration": "35-60 דקות לאזור",
+          "recovery": "ללא זמן החלמה",
+          "active": true
+        },
+        {
+          "id": "rf_body",
+          "name": "מיצוק RF גוף",
+          "description": "גלי רדיו למיצוק עור הגוף וטיפול בצלוליט",
+          "indications": ["צלוליט", "עור רופף", "חיטוב גוף"],
+          "duration": "45-60 דקות",
+          "recovery": "ללא זמן החלמה",
+          "active": true
+        },
+        {
+          "id": "laser_hair_removal",
+          "name": "הסרת שיער בלייזר",
+          "description": "הסרת שיער קבועה עם לייזר דיודה",
+          "indications": ["עיבוי שיער", "שיער בכל אזור הגוף"],
+          "duration": "15-60 דקות לפי אזור",
+          "recovery": "ללא זמן החלמה",
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": "advanced_diagnostics",
+      "name": "אבחון מתקדם",
+      "treatments": [
+        {
+          "id": "skin_analysis",
+          "name": "ניתוח עור מתקדם (VISIA)",
+          "description": "אבחון מצב עור מלא בטכנולוגיית VISIA עם דוח מפורט",
+          "indications": ["הערכה ראשונית", "מעקב טיפולי"],
+          "duration": "20-30 דקות",
+          "recovery": "ללא",
+          "active": true
+        },
+        {
+          "id": "blood_test_analysis",
+          "name": "ניתוח בדיקות דם לאסתטיקה",
+          "description": "ניתוח תוצאות בדיקות דם לזיהוי חסרים המשפיעים על העור",
+          "indications": ["עור עמום", "נשירת שיער", "עור יבש", "הזדקנות מוקדמת"],
+          "duration": "30 דקות",
+          "recovery": "ללא",
+          "active": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block title %}{{ 'עריכת' if mode == 'edit' else 'יצירת' }} Agent | רויאל-מד{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="{{ url_for('agents_list') }}" class="back-link">← חזרה ל-Agents</a>
+    <h1 class="page-title">{{ '✏️ עריכת' if mode == 'edit' else '🤖 יצירת' }} Agent חדש</h1>
+    <p class="page-subtitle">הגדר את האופי, הידע וההתנהגות של ה-Agent</p>
+  </div>
+</div>
+
+<div class="builder-layout">
+
+  <!-- טופס בנייה -->
+  <div class="builder-main">
+
+    <!-- פרטים בסיסיים -->
+    <div class="card">
+      <div class="card-title">📝 פרטים בסיסיים</div>
+
+      <div class="builder-row">
+        <div class="form-group" style="width:80px">
+          <label class="form-label">אייקון</label>
+          <div class="icon-picker">
+            <div class="icon-display" id="iconDisplay" onclick="openIconPicker()">
+              {{ agent.icon if agent else '🤖' }}
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">שם ה-Agent *</label>
+          <input type="text" id="agentName" class="form-input"
+            placeholder="לדוגמה: יועץ טיפולי, מומחה עור..."
+            value="{{ agent.name if agent else '' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">תיאור קצר</label>
+        <input type="text" id="agentDesc" class="form-input"
+          placeholder="מה ה-Agent הזה עושה?"
+          value="{{ agent.description if agent else '' }}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">מודל AI</label>
+        <div class="model-selector">
+          {% for m, label in [('gpt-4o','GPT-4o (OpenAI)'), ('gpt-4o-mini','GPT-4o Mini (זול יותר)')] %}
+          <label class="model-option">
+            <input type="radio" name="agentModel" value="{{ m }}"
+              {{ 'checked' if (agent and agent.model == m) or (not agent and m == 'gpt-4o') else '' }}>
+            <span class="model-card">
+              <span class="model-name">{{ label.split('(')[0].strip() }}</span>
+              <span class="model-desc">{{ '(' + label.split('(')[1] if '(' in label else '' }}</span>
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- הוראות ואופי -->
+    <div class="card">
+      <div class="card-title">🧠 הוראות ואופי ה-Agent</div>
+      <p class="card-desc">כאן אתה מלמד את ה-Agent מי הוא, מה תפקידו ואיך להתנהג. ככל שתהיה מפורט יותר — כך ה-Agent יהיה מדויק יותר.</p>
+
+      <div class="form-group">
+        <label class="form-label">
+          System Prompt — הוראות מלאות *
+          <span class="help-tag" onclick="showPromptHelp()">? עזרה</span>
+        </label>
+        <textarea id="agentPrompt" class="form-input form-textarea-large"
+          placeholder="לדוגמה:
+אתה [שם ה-Agent], מומחה ב[תחום] של מרפאת רויאל-מד.
+תפקידך: [תאר את התפקיד]
+כיצד לענות: [סגנון, שפה, רמת פירוט]
+מה לא לעשות: [גבולות]">{{ agent.system_prompt if agent else '' }}</textarea>
+      </div>
+
+      <!-- טיפים לכתיבת פרומפט -->
+      <div class="prompt-tips" id="promptHelp" style="display:none">
+        <div class="tips-title">💡 טיפים לכתיבת פרומפט טוב</div>
+        <ul class="tips-list">
+          <li>התחל ב"אתה [תפקיד]..." — הגדר זהות ברורה</li>
+          <li>ציין את שם המרפאה: "של רויאל-מד"</li>
+          <li>הגדר סגנון: "ענה בצורה מקצועית אך ידידותית"</li>
+          <li>הגדר גבולות: "אל תתן אבחנות סופיות"</li>
+          <li>ציין שפה: "תמיד ענה בעברית"</li>
+        </ul>
+        <div class="prompt-examples">
+          <div class="example-title">דוגמה לפרומפט טוב:</div>
+          <div class="example-text">אתה יועץ טיפולי מומחה של מרפאת רויאל-מד. תפקידך לסייע לצוות הרפואי לבנות תוכניות טיפול מותאמות אישית. שאל שאלות ממוקדות על גיל המטופל, מצב העור, הרגלי שמש וציפיות. המלץ תמיד על שילוב טיפולים מהרשימה הרשמית של המרפאה. ענה תמיד בעברית בצורה מקצועית וחמה.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- בסיס ידע -->
+    <div class="card">
+      <div class="card-title">📚 בסיס ידע — לִמֵּד את ה-Agent</div>
+      <p class="card-desc">הוסף כל מידע שרוצה שה-Agent ידע: פרוטוקולים, מחירים, מידע על הצוות, תנאים רפואיים, שאלות נפוצות וכו'.</p>
+
+      <div class="form-group">
+        <label class="form-label">ידע ומידע ספציפי</label>
+        <textarea id="agentKnowledge" class="form-input form-textarea-large"
+          placeholder="הוסף כל מידע רלוונטי:
+
+פרוטוקול בוטוקס:
+- מינון מקסימלי: 50 יחידות לפגישה
+- אזורי טיפול: מצח, עורבות, פפה
+- חזרה על טיפול: כל 4-6 חודשים
+- גיל מינימלי: 18
+
+מחירי המרפאה:
+- בוטוקס: החל מ-X ₪
+- פילר: החל מ-Y ₪
+
+שאלות נפוצות:
+ש: כמה זמן מחזיק בוטוקס?
+ת: בממוצע 3-4 חודשים
+
+...">{{ agent.knowledge if agent else '' }}</textarea>
+      </div>
+
+      <div class="knowledge-actions">
+        <button onclick="pasteFromClipboard()" class="btn btn-outline btn-sm">📋 הדבק מלוח</button>
+        <button onclick="clearKnowledge()" class="btn btn-outline btn-sm">🗑 נקה</button>
+        <span class="char-count" id="charCount">0 תווים</span>
+      </div>
+    </div>
+
+    <!-- כפתורי שמירה -->
+    <div class="builder-actions">
+      <a href="{{ url_for('agents_list') }}" class="btn btn-outline">ביטול</a>
+      <button onclick="testAgent()" class="btn btn-secondary">🧪 בדוק Agent</button>
+      <button onclick="saveAgent()" class="btn btn-primary btn-large" id="saveBtn">
+        💾 {{ 'שמור שינויים' if mode == 'edit' else 'צור Agent' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- תצוגה מקדימה -->
+  <div class="builder-preview">
+    <div class="card">
+      <div class="card-title">👁 תצוגה מקדימה</div>
+      <div class="preview-agent-card">
+        <div class="preview-icon" id="previewIcon">🤖</div>
+        <div class="preview-name" id="previewName">שם ה-Agent</div>
+        <div class="preview-desc" id="previewDesc">תיאור ה-Agent יופיע כאן</div>
+        <div class="preview-model" id="previewModel">gpt-4o</div>
+      </div>
+
+      <!-- בדיקה מהירה -->
+      <div id="testSection" style="display:none">
+        <div class="test-title">🧪 בדיקה מהירה</div>
+        <div class="test-messages" id="testMessages"></div>
+        <div class="test-input-row">
+          <input type="text" id="testInput" class="form-input" placeholder="שאל משהו...">
+          <button onclick="sendTestMessage()" class="btn btn-primary btn-sm">שלח</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Icon Picker -->
+<div class="modal-overlay" id="iconPickerModal" style="display:none" onclick="closeIconPicker(event)">
+  <div class="modal-card">
+    <div class="modal-title">בחר אייקון</div>
+    <div class="icon-grid">
+      {% for icon in ['🤖','💆','🧬','🔬','💉','🩺','📋','💊','🏥','⚕','👨‍⚕️','👩‍⚕️','🧪','🔍','💡','⭐','🌟','✨','💎','🎯'] %}
+      <div class="icon-option" onclick="selectIcon('{{ icon }}')">{{ icon }}</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const agentId = {{ agent.id if agent else 'null' }};
+
+// עדכון תצוגה מקדימה בזמן אמת
+document.getElementById('agentName').addEventListener('input', updatePreview);
+document.getElementById('agentDesc').addEventListener('input', updatePreview);
+document.querySelectorAll('input[name="agentModel"]').forEach(r => r.addEventListener('change', updatePreview));
+
+const knowledgeArea = document.getElementById('agentKnowledge');
+knowledgeArea.addEventListener('input', () => {
+  document.getElementById('charCount').textContent = knowledgeArea.value.length + ' תווים';
+});
+
+// אתחול מהURL params (templates)
+const params = new URLSearchParams(window.location.search);
+if (params.get('name')) document.getElementById('agentName').value = params.get('name');
+if (params.get('icon')) document.getElementById('iconDisplay').textContent = params.get('icon');
+if (params.get('desc')) document.getElementById('agentDesc').value = params.get('desc');
+if (params.get('prompt')) document.getElementById('agentPrompt').value = params.get('prompt');
+updatePreview();
+
+function updatePreview() {
+  document.getElementById('previewIcon').textContent = document.getElementById('iconDisplay').textContent;
+  document.getElementById('previewName').textContent = document.getElementById('agentName').value || 'שם ה-Agent';
+  document.getElementById('previewDesc').textContent = document.getElementById('agentDesc').value || 'תיאור ה-Agent';
+  document.getElementById('previewModel').textContent = document.querySelector('input[name="agentModel"]:checked')?.value || 'gpt-4o';
+}
+
+// Icon picker
+function openIconPicker() { document.getElementById('iconPickerModal').style.display = 'flex'; }
+function closeIconPicker(e) { if (e.target.id === 'iconPickerModal') e.target.style.display = 'none'; }
+function selectIcon(icon) {
+  document.getElementById('iconDisplay').textContent = icon;
+  document.getElementById('iconPickerModal').style.display = 'none';
+  updatePreview();
+}
+
+// עזרה לפרומפט
+function showPromptHelp() {
+  const el = document.getElementById('promptHelp');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// שמירה
+async function saveAgent() {
+  const name = document.getElementById('agentName').value.trim();
+  const prompt = document.getElementById('agentPrompt').value.trim();
+  if (!name) { alert('יש להכניס שם ל-Agent'); return; }
+  if (!prompt) { alert('יש להכניס הוראות ל-Agent'); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ שומר...';
+
+  const payload = {
+    id: agentId,
+    name,
+    description: document.getElementById('agentDesc').value,
+    icon: document.getElementById('iconDisplay').textContent,
+    system_prompt: prompt,
+    knowledge: document.getElementById('agentKnowledge').value,
+    model: document.querySelector('input[name="agentModel"]:checked')?.value || 'gpt-4o',
+    active: 1
+  };
+
+  const res = await fetch('/api/agents/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+
+  if (data.success) {
+    window.location.href = `/agents/${data.id}/chat`;
+  } else {
+    alert('שגיאה: ' + data.error);
+    btn.disabled = false;
+    btn.textContent = '💾 שמור';
+  }
+}
+
+// בדיקה
+function testAgent() {
+  const name = document.getElementById('agentName').value.trim();
+  const prompt = document.getElementById('agentPrompt').value.trim();
+  if (!name || !prompt) { alert('הכנס שם והוראות לפני הבדיקה'); return; }
+  document.getElementById('testSection').style.display = 'block';
+  document.getElementById('testInput').focus();
+}
+
+let tempSessionId = 'test-' + Date.now();
+
+async function sendTestMessage() {
+  const input = document.getElementById('testInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  // שמור Agent זמנית ואז בדוק
+  const payload = {
+    id: agentId,
+    name: document.getElementById('agentName').value,
+    description: document.getElementById('agentDesc').value,
+    icon: document.getElementById('iconDisplay').textContent,
+    system_prompt: document.getElementById('agentPrompt').value,
+    knowledge: document.getElementById('agentKnowledge').value,
+    model: document.querySelector('input[name="agentModel"]:checked')?.value || 'gpt-4o',
+    active: 1
+  };
+
+  const saveRes = await fetch('/api/agents/save', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+  });
+  const saveData = await saveRes.json();
+  if (!saveData.success) { alert('שגיאה בשמירה זמנית'); return; }
+
+  addTestMsg('user', msg);
+  input.value = '';
+  addTestMsg('typing', '⏳ חושב...');
+
+  const chatRes = await fetch(`/api/agents/${saveData.id}/chat`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg, session_id: tempSessionId })
+  });
+  const chatData = await chatRes.json();
+
+  document.querySelector('.typing-test')?.remove();
+  if (chatData.success) {
+    addTestMsg('assistant', chatData.response);
+  } else {
+    addTestMsg('error', '⚠ ' + chatData.error);
+  }
+}
+
+function addTestMsg(role, text) {
+  const div = document.createElement('div');
+  div.className = `test-msg test-msg-${role}`;
+  if (role === 'typing') div.className += ' typing-test';
+  div.textContent = text;
+  document.getElementById('testMessages').appendChild(div);
+  document.getElementById('testMessages').scrollTop = 9999;
+}
+
+function pasteFromClipboard() {
+  navigator.clipboard.readText().then(t => {
+    document.getElementById('agentKnowledge').value += t;
+    document.getElementById('charCount').textContent = document.getElementById('agentKnowledge').value.length + ' תווים';
+  });
+}
+
+function clearKnowledge() {
+  if (confirm('לנקות את בסיס הידע?')) {
+    document.getElementById('agentKnowledge').value = '';
+    document.getElementById('charCount').textContent = '0 תווים';
+  }
+}
+
+document.getElementById('testInput')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendTestMessage();
+});
+
+updatePreview();
+document.getElementById('charCount').textContent = knowledgeArea.value.length + ' תווים';
+</script>
+{% endblock %}

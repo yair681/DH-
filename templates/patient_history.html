@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }} | רויאל-מד{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="{{ url_for('patients') }}" class="back-link">← חזרה למטופלים</a>
+    <h1 class="page-title">{{ patient.name }}</h1>
+    <p class="page-subtitle">
+      {% if patient.phone %}📞 {{ patient.phone }}{% endif %}
+      {% if patient.birth_year %} | 📅 {{ patient.birth_year }}{% endif %}
+    </p>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('diagnosis') }}?patient_id={{ patient.id }}" class="btn btn-primary">+ אבחון חדש</a>
+    <a href="{{ url_for('visualization') }}?patient_id={{ patient.id }}" class="btn btn-secondary">+ הדמיה חדשה</a>
+  </div>
+</div>
+
+{% if patient.notes %}
+<div class="patient-notes card">
+  <strong>הערות:</strong> {{ patient.notes }}
+</div>
+{% endif %}
+
+<!-- אבחונים -->
+<div class="section-title">📋 היסטוריית אבחונים ({{ consultations|length }})</div>
+
+{% if consultations %}
+<div class="history-list">
+  {% for c in consultations %}
+  <div class="history-card">
+    <div class="history-card-header">
+      <span class="history-date">{{ c.created_at[:16] }}</span>
+      <span class="badge badge-blue">{{ c.model_used or 'AI' }}</span>
+    </div>
+    {% if c.image_path %}
+    <img src="{{ url_for('static', filename=c.image_path) }}" class="history-thumb" alt="תמונת בדיקה">
+    {% endif %}
+    {% if c.additional_info %}
+    <div class="history-note"><strong>הערות:</strong> {{ c.additional_info }}</div>
+    {% endif %}
+    <div class="history-result">{{ c.ai_result[:300] }}{% if c.ai_result|length > 300 %}...{% endif %}</div>
+    <details>
+      <summary class="expand-link">קרא פענוח מלא</summary>
+      <div class="history-result-full">{{ c.ai_result | replace('\n', '<br>') | safe }}</div>
+    </details>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state-inline">אין אבחונים עדיין</div>
+{% endif %}
+
+<!-- הדמיות -->
+<div class="section-title">✨ היסטוריית הדמיות ({{ visualizations|length }})</div>
+
+{% if visualizations %}
+<div class="viz-grid">
+  {% for v in visualizations %}
+  <div class="viz-card">
+    <div class="viz-treatment">{{ v.treatment_name }}</div>
+    <div class="viz-images">
+      {% if v.before_image_path %}
+      <div class="viz-side">
+        <div class="viz-label">לפני</div>
+        <img src="{{ url_for('static', filename=v.before_image_path) }}" class="viz-img" alt="לפני">
+      </div>
+      {% endif %}
+      {% if v.after_image_path %}
+      <div class="viz-side">
+        <div class="viz-label">אחרי</div>
+        <img src="{{ url_for('static', filename=v.after_image_path) }}" class="viz-img" alt="אחרי">
+      </div>
+      {% elif v.after_image_url %}
+      <div class="viz-side">
+        <div class="viz-label">אחרי</div>
+        <img src="{{ v.after_image_url }}" class="viz-img" alt="אחרי">
+      </div>
+      {% endif %}
+    </div>
+    <div class="viz-date">{{ v.created_at[:10] }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state-inline">אין הדמיות עדיין</div>
+{% endif %}
+
+{% endblock %}

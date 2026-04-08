@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}פענוח ואבחון | רויאל-מד{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">🔬 פענוח ואבחון</h1>
+  <p class="page-subtitle">העלה תמונת בדיקה / ניתוח עור — AI יספק פענוח ברור בעברית</p>
+</div>
+
+<div class="two-col-layout">
+
+  <!-- טופס העלאה -->
+  <div class="card">
+    <div class="card-title">העלאת תמונה לניתוח</div>
+
+    <form id="diagnosisForm" enctype="multipart/form-data">
+
+      <!-- בחירת מטופל -->
+      <div class="form-group">
+        <label class="form-label">מטופל</label>
+        <div class="patient-select-row">
+          <select name="patient_id" id="patientSelect" class="form-input form-select">
+            <option value="">— ייעוץ אנונימי —</option>
+            {% for p in patients %}
+            <option value="{{ p.id }}">{{ p.name }}{% if p.phone %} | {{ p.phone }}{% endif %}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="patient_name" id="patientName" class="form-input" placeholder="או הכנס שם ידנית...">
+        </div>
+      </div>
+
+      <!-- העלאת תמונה -->
+      <div class="form-group">
+        <label class="form-label">תמונת הבדיקה *</label>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" name="image" id="imageInput" accept="image/*" class="upload-input" required>
+          <div class="upload-content" id="uploadContent">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">לחץ להעלאה או גרור תמונה לכאן</div>
+            <div class="upload-hint">PNG, JPG, WEBP עד 10MB</div>
+          </div>
+          <img id="imagePreview" class="image-preview" style="display:none">
+        </div>
+      </div>
+
+      <!-- מידע נוסף -->
+      <div class="form-group">
+        <label class="form-label">מידע נוסף לצוות (אופציונלי)</label>
+        <textarea name="additional_info" class="form-input form-textarea"
+          placeholder="הוסף הערות, תלונות מטופל, מידע רלוונטי..."></textarea>
+      </div>
+
+      <!-- בחירת מודל -->
+      <input type="hidden" name="model" value="openai">
+
+      <button type="submit" class="btn btn-primary btn-full btn-large" id="submitBtn">
+        <span id="submitText">ניתוח תמונה →</span>
+        <span id="submitLoader" style="display:none">⏳ מנתח...</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- תוצאות -->
+  <div class="card" id="resultCard" style="display:none">
+    <div class="card-title">
+      📋 תוצאות הניתוח
+      <span class="model-badge" id="modelBadge"></span>
+    </div>
+    <div id="resultContent" class="result-content"></div>
+    <div class="result-actions">
+      <button onclick="printResult()" class="btn btn-outline">🖨 הדפסה</button>
+      <button onclick="copyResult()" class="btn btn-outline">📋 העתקה</button>
+      <button onclick="newDiagnosis()" class="btn btn-secondary">ניתוח חדש</button>
+    </div>
+  </div>
+
+  <!-- שגיאה -->
+  <div class="card card-error" id="errorCard" style="display:none">
+    <div class="card-title">⚠ שגיאה</div>
+    <div id="errorContent"></div>
+    <button onclick="newDiagnosis()" class="btn btn-secondary">נסה שנית</button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const form = document.getElementById('diagnosisForm');
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const uploadContent = document.getElementById('uploadContent');
+const submitBtn = document.getElementById('submitBtn');
+const submitText = document.getElementById('submitText');
+const submitLoader = document.getElementById('submitLoader');
+
+// תצוגה מקדימה של תמונה
+imageInput.addEventListener('change', function() {
+  const file = this.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      imagePreview.src = e.target.result;
+      imagePreview.style.display = 'block';
+      uploadContent.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// drag & drop
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    imageInput.files = e.dataTransfer.files;
+    imageInput.dispatchEvent(new Event('change'));
+  }
+});
+
+// סנכרון שם מטופל מרשימה
+document.getElementById('patientSelect').addEventListener('change', function() {
+  const selected = this.options[this.selectedIndex];
+  if (this.value) {
+    document.getElementById('patientName').value = selected.text.split(' | ')[0];
+  }
+});
+
+// שליחת טופס
+form.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  setLoading(true);
+  hideCards();
+
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch('/api/diagnose', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.success) {
+      showResult(data.result, data.model);
+    } else {
+      showError(data.error);
+    }
+  } catch (err) {
+    showError('שגיאת תקשורת: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+});
+
+function setLoading(loading) {
+  submitBtn.disabled = loading;
+  submitText.style.display = loading ? 'none' : 'inline';
+  submitLoader.style.display = loading ? 'inline' : 'none';
+}
+
+function showResult(text, model) {
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('modelBadge').textContent = model || '';
+  // המרת שורות לHTML
+  const html = text.replace(/\n/g, '<br>').replace(/•/g, '•');
+  document.getElementById('resultContent').innerHTML = html;
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function showError(msg) {
+  document.getElementById('errorCard').style.display = 'block';
+  document.getElementById('errorContent').textContent = msg;
+}
+
+function hideCards() {
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('errorCard').style.display = 'none';
+}
+
+function printResult() { window.print(); }
+
+function copyResult() {
+  const text = document.getElementById('resultContent').innerText;
+  navigator.clipboard.writeText(text).then(() => alert('הועתק ללוח'));
+}
+
+function newDiagnosis() {
+  form.reset();
+  imagePreview.style.display = 'none';
+  uploadContent.style.display = 'block';
+  hideCards();
+  window.scrollTo(0, 0);
+}
+</script>
+{% endblock %}

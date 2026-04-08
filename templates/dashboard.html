@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}לוח בקרה | רויאל-מד{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">לוח בקרה</h1>
+  <p class="page-subtitle">ברוכים הבאים למערכת AI של רויאל-מד</p>
+</div>
+
+<!-- סטטיסטיקות -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue">👥</div>
+    <div class="stat-info">
+      <div class="stat-number">{{ stats.total_patients }}</div>
+      <div class="stat-label">מטופלים</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon teal">🔬</div>
+    <div class="stat-info">
+      <div class="stat-number">{{ stats.total_diagnoses }}</div>
+      <div class="stat-label">אבחונים</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple">✨</div>
+    <div class="stat-info">
+      <div class="stat-number">{{ stats.total_visualizations }}</div>
+      <div class="stat-label">הדמיות</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">📅</div>
+    <div class="stat-info">
+      <div class="stat-number">{{ stats.today_consultations }}</div>
+      <div class="stat-label">ייעוצים היום</div>
+    </div>
+  </div>
+</div>
+
+<!-- פעולות מהירות -->
+<div class="section-title">פעולות מהירות</div>
+<div class="quick-actions">
+  <a href="{{ url_for('diagnosis') }}" class="action-card">
+    <div class="action-icon">🔬</div>
+    <div class="action-title">פענוח בדיקה</div>
+    <div class="action-desc">העלה תמונת בדיקה לניתוח AI</div>
+  </a>
+  <a href="{{ url_for('visualization') }}" class="action-card">
+    <div class="action-icon">✨</div>
+    <div class="action-title">הדמיית לפני/אחרי</div>
+    <div class="action-desc">הדמיה ויזואלית של תוצאת טיפול</div>
+  </a>
+  <a href="{{ url_for('chat') }}" class="action-card">
+    <div class="action-icon">💬</div>
+    <div class="action-title">עוזר AI</div>
+    <div class="action-desc">שאל שאלות מקצועיות</div>
+  </a>
+  <a href="{{ url_for('patients') }}" class="action-card">
+    <div class="action-icon">👥</div>
+    <div class="action-title">מטופלים</div>
+    <div class="action-desc">ניהול היסטוריית מטופלים</div>
+  </a>
+</div>
+
+<!-- פעולות אחרונות -->
+{% if recent %}
+<div class="section-title">פעולות אחרונות</div>
+<div class="table-container">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>תאריך</th>
+        <th>מטופל</th>
+        <th>סוג</th>
+        <th>מודל AI</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in recent %}
+      <tr>
+        <td>{{ c.created_at[:16] }}</td>
+        <td>{{ c.patient_name or 'לא צוין' }}</td>
+        <td>
+          <span class="badge {% if c.consultation_type == 'diagnosis' %}badge-blue{% else %}badge-purple{% endif %}">
+            {{ 'אבחון' if c.consultation_type == 'diagnosis' else 'הדמיה' }}
+          </span>
+        </td>
+        <td>{{ c.model_used or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

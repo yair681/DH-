@@ -1,0 +1,21 @@
+# סודות — אל תעלה לעולם
+.env
+*.env
+
+# מסד נתונים — נוצר אוטומטית בשרת
+data/royal_med.db
+
+# תמונות שהועלו — לא חלק מהקוד
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# מערכת
+.DS_Store
+Thumbs.db

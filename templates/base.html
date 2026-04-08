@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}רויאל-מד | AI{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+{% if session.logged_in %}
+<!-- ════ ניווט צד ════ -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">RM</div>
+    <div class="logo-text">
+      <span class="logo-name">רויאל-מד</span>
+      <span class="logo-sub">מערכת AI</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+      <span class="nav-icon">⊞</span>
+      <span>לוח בקרה</span>
+    </a>
+    <a href="{{ url_for('diagnosis') }}" class="nav-item {% if request.endpoint == 'diagnosis' %}active{% endif %}">
+      <span class="nav-icon">🔬</span>
+      <span>פענוח ואבחון</span>
+    </a>
+    <a href="{{ url_for('visualization') }}" class="nav-item {% if request.endpoint == 'visualization' %}active{% endif %}">
+      <span class="nav-icon">✨</span>
+      <span>הדמיית לפני/אחרי</span>
+    </a>
+    <a href="{{ url_for('chat') }}" class="nav-item {% if request.endpoint == 'chat' %}active{% endif %}">
+      <span class="nav-icon">💬</span>
+      <span>עוזר AI</span>
+    </a>
+    <a href="{{ url_for('agents_list') }}" class="nav-item {% if request.endpoint in ['agents_list','agent_new','agent_edit','agent_chat'] %}active{% endif %}">
+      <span class="nav-icon">🤖</span>
+      <span>Agents שלי</span>
+    </a>
+    <a href="{{ url_for('patients') }}" class="nav-item {% if request.endpoint in ['patients','patient_history'] %}active{% endif %}">
+      <span class="nav-icon">👥</span>
+      <span>מטופלים</span>
+    </a>
+    <a href="{{ url_for('settings') }}" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+      <span class="nav-icon">⚙</span>
+      <span>הגדרות</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="{{ url_for('logout') }}" class="logout-btn">יציאה</a>
+    <div class="version-tag">v1.0</div>
+  </div>
+</div>
+
+<!-- ════ תוכן ראשי ════ -->
+<div class="main-content">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+
+{% else %}
+{% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

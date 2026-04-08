@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}מטופלים | רויאל-מד{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">👥 ניהול מטופלים</h1>
+  <button onclick="document.getElementById('newPatientModal').style.display='flex'" class="btn btn-primary">
+    + הוסף מטופל
+  </button>
+</div>
+
+<!-- חיפוש -->
+<form method="GET" class="search-row">
+  <input type="text" name="q" value="{{ query }}" class="form-input search-input" placeholder="חיפוש לפי שם או טלפון...">
+  <button type="submit" class="btn btn-primary">חפש</button>
+  {% if query %}
+  <a href="{{ url_for('patients') }}" class="btn btn-outline">הצג הכל</a>
+  {% endif %}
+</form>
+
+<!-- רשימת מטופלים -->
+{% if patients %}
+<div class="table-container">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>שם</th>
+        <th>טלפון</th>
+        <th>שנת לידה</th>
+        <th>הצטרף</th>
+        <th>פעולות</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in patients %}
+      <tr>
+        <td><strong>{{ p.name }}</strong></td>
+        <td>{{ p.phone or '—' }}</td>
+        <td>{{ p.birth_year or '—' }}</td>
+        <td>{{ p.created_at[:10] }}</td>
+        <td>
+          <a href="{{ url_for('patient_history', patient_id=p.id) }}" class="btn btn-outline btn-sm">
+            היסטוריה
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">👥</div>
+  <div class="empty-title">אין מטופלים עדיין</div>
+  <div class="empty-desc">הוסף מטופל ראשון כדי להתחיל</div>
+</div>
+{% endif %}
+
+<!-- מודל מטופל חדש -->
+<div class="modal-overlay" id="newPatientModal" style="display:none" onclick="closeModal(event)">
+  <div class="modal-card">
+    <div class="modal-title">הוסף מטופל חדש</div>
+    <form method="POST" action="{{ url_for('new_patient') }}">
+      <div class="form-group">
+        <label class="form-label">שם מלא *</label>
+        <input type="text" name="name" class="form-input" required placeholder="שם פרטי ומשפחה">
+      </div>
+      <div class="form-group">
+        <label class="form-label">טלפון</label>
+        <input type="text" name="phone" class="form-input" placeholder="050-0000000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">שנת לידה</label>
+        <input type="number" name="birth_year" class="form-input" placeholder="1985" min="1920" max="2010">
+      </div>
+      <div class="form-group">
+        <label class="form-label">הערות</label>
+        <textarea name="notes" class="form-input form-textarea" placeholder="אלרגיות, מחלות רקע..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" onclick="document.getElementById('newPatientModal').style.display='none'" class="btn btn-outline">ביטול</button>
+        <button type="submit" class="btn btn-primary">הוסף מטופל</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function closeModal(e) {
+  if (e.target.id === 'newPatientModal') {
+    e.target.style.display = 'none';
+  }
+}
+</script>
+{% endblock %}
